@@ -24,7 +24,7 @@ func parseDirectives(doc *ast.CommentGroup) directives {
 	if doc == nil {
 		return directives{}
 	}
-	const prefix = "//gocyclo:"
+	const prefix = "//go-sca:"
 	var ds directives
 	for _, comment := range doc.List {
 		if strings.HasPrefix(comment.Text, prefix) {
