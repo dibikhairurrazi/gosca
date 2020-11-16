@@ -2,7 +2,6 @@ package rules
 
 import (
 	"fmt"
-	"go/ast"
 	"go/token"
 	"sort"
 )
@@ -11,12 +10,14 @@ import (
 type Stat struct {
 	PkgName    string
 	FuncName   string
+	Cyclomatic int
+	Cognitive  int
 	Complexity int
 	Pos        token.Position
 }
 
 func (s Stat) String() string {
-	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, s.Pos)
+	return fmt.Sprintf("%d %d %s %s %s", s.Cyclomatic, s.Cognitive, s.PkgName, s.FuncName, s.Pos)
 }
 
 // Stats hold the complexities of many functions.
@@ -68,44 +69,4 @@ func (s byComplexityDesc) Swap(i, j int) {
 
 func (s byComplexityDesc) Less(i, j int) bool {
 	return s[i].Complexity >= s[j].Complexity
-}
-
-// ComplexityStats builds the complexity statistics.
-/* func ComplexityStats(f *ast.File, fset *token.FileSet, stats []Stat) []Stat {
-	for _, decl := range f.Decls {
-		if fn, ok := decl.(*ast.FuncDecl); ok {
-			stats = append(stats, Stat{
-				PkgName:    f.Name.Name,
-				FuncName:   funcName(fn),
-				Complexity: Complexity(fn),
-				Pos:        fset.Position(fn.Pos()),
-			})
-		}
-	}
-	return stats
-}
-*/
-
-// funcName returns the name representation of a function or method:
-// "(Type).Name" for methods or simply "Name" for functions.
-func funcName(fn *ast.FuncDecl) string {
-	if fn.Recv != nil {
-		if fn.Recv.NumFields() > 0 {
-			typ := fn.Recv.List[0].Type
-			return fmt.Sprintf("(%s).%s", recvString(typ), fn.Name)
-		}
-	}
-	return fn.Name.Name
-}
-
-// recvString returns a string representation of recv of the
-// form "T", "*T", or "BADRECV" (if not a proper receiver type).
-func recvString(recv ast.Expr) string {
-	switch t := recv.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.StarExpr:
-		return "*" + recvString(t.X)
-	}
-	return "BADRECV"
 }

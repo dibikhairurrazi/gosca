@@ -6,13 +6,28 @@ import (
 )
 
 // CognitiveComplexity calculates the cognitive complexity of a function.
-func CognitiveComplexity(fn *ast.FuncDecl) int {
+func CognitiveComplexity(fn ast.Node) int {
 	v := cognitiveVisitor{
-		name: fn.Name,
+		// name: fn.Name,
 	}
 	ast.Walk(&v, fn)
 	return v.complexity
 }
+
+/* // ComplexityStats builds the complexity statistics.
+func ComplexityStats(f *ast.File, fset *token.FileSet, stats []Stat) []Stat {
+	for _, decl := range f.Decls {
+		if fn, ok := decl.(*ast.FuncDecl); ok {
+			stats = append(stats, Stat{
+				PkgName:    f.Name.Name,
+				FuncName:   funcName(fn),
+				Complexity: CognitiveComplexity(fn),
+				Pos:        fset.Position(fn.Pos()),
+			})
+		}
+	}
+	return stats
+} */
 
 type cognitiveVisitor struct {
 	name            *ast.Ident
@@ -233,7 +248,6 @@ func (v *cognitiveVisitor) collectBinaryOps(exp ast.Expr) []token.Token {
 	case *ast.BinaryExpr:
 		return mergeBinaryOps(v.collectBinaryOps(exp.X), exp.Op, v.collectBinaryOps(exp.Y))
 	case *ast.ParenExpr:
-		// interest only on what inside paranthese
 		return v.collectBinaryOps(exp.X)
 	default:
 		return []token.Token{}
