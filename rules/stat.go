@@ -17,7 +17,7 @@ type Stat struct {
 }
 
 func (s Stat) String() string {
-	return fmt.Sprintf("%d %d %s %s %s", s.Cyclomatic, s.Cognitive, s.PkgName, s.FuncName, s.Pos)
+	return fmt.Sprintf("cyclomatic: %d, cognitive: %d, %s %s %s", s.Cyclomatic, s.Cognitive, s.PkgName, s.FuncName, s.Pos)
 }
 
 // Stats hold the complexities of many functions.

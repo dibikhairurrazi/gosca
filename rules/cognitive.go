@@ -6,9 +6,9 @@ import (
 )
 
 // CognitiveComplexity calculates the cognitive complexity of a function.
-func CognitiveComplexity(fn ast.Node) int {
+func CognitiveComplexity(fn *ast.FuncDecl) int {
 	v := cognitiveVisitor{
-		// name: fn.Name,
+		name: fn.Name,
 	}
 	ast.Walk(&v, fn)
 	return v.complexity

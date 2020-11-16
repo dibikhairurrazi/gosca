@@ -5,7 +5,7 @@ import (
 	"go/token"
 )
 
-// AnalyzeASTFile calculates the cyclomatic complexities of the functions
+// AnalyzeASTFile calculates the complexities of the functions
 // and methods in the abstract syntax tree (AST) of a parsed Go file and
 // appends the results to the given Stats slice.
 func AnalyzeASTFile(f *ast.File, fs *token.FileSet, s Stats) Stats {
@@ -59,7 +59,7 @@ func (a *fileAnalyzer) addStatIfNotIgnored(node ast.Node, funcName string, doc *
 		PkgName:    a.file.Name.Name,
 		FuncName:   funcName,
 		Cyclomatic: CyclomaticComplexity(node),
-		Cognitive:  CognitiveComplexity(node),
+		Cognitive:  CognitiveComplexity(node.(*ast.FuncDecl)),
 		Pos:        a.fileSet.Position(node.Pos()),
 	})
 }
