@@ -1,72 +1,20 @@
-package cognitive
+package rules
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 )
 
-// Stat is statistic of the complexity.
-type Stat struct {
-	PkgName    string
-	FuncName   string
-	Complexity int
-	Pos        token.Position
-}
-
-func (s Stat) String() string {
-	return fmt.Sprintf("%d %s %s %s", s.Complexity, s.PkgName, s.FuncName, s.Pos)
-}
-
-// ComplexityStats builds the complexity statistics.
-func ComplexityStats(f *ast.File, fset *token.FileSet, stats []Stat) []Stat {
-	for _, decl := range f.Decls {
-		if fn, ok := decl.(*ast.FuncDecl); ok {
-			stats = append(stats, Stat{
-				PkgName:    f.Name.Name,
-				FuncName:   funcName(fn),
-				Complexity: Complexity(fn),
-				Pos:        fset.Position(fn.Pos()),
-			})
-		}
-	}
-	return stats
-}
-
-// funcName returns the name representation of a function or method:
-// "(Type).Name" for methods or simply "Name" for functions.
-func funcName(fn *ast.FuncDecl) string {
-	if fn.Recv != nil {
-		if fn.Recv.NumFields() > 0 {
-			typ := fn.Recv.List[0].Type
-			return fmt.Sprintf("(%s).%s", recvString(typ), fn.Name)
-		}
-	}
-	return fn.Name.Name
-}
-
-// recvString returns a string representation of recv of the
-// form "T", "*T", or "BADRECV" (if not a proper receiver type).
-func recvString(recv ast.Expr) string {
-	switch t := recv.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.StarExpr:
-		return "*" + recvString(t.X)
-	}
-	return "BADRECV"
-}
-
-// Complexity calculates the cognitive complexity of a function.
-func Complexity(fn *ast.FuncDecl) int {
-	v := complexityVisitor{
+// CognitiveComplexity calculates the cognitive complexity of a function.
+func CognitiveComplexity(fn *ast.FuncDecl) int {
+	v := cognitiveVisitor{
 		name: fn.Name,
 	}
 	ast.Walk(&v, fn)
 	return v.complexity
 }
 
-type complexityVisitor struct {
+type cognitiveVisitor struct {
 	name            *ast.Ident
 	complexity      int
 	nesting         int
@@ -74,23 +22,23 @@ type complexityVisitor struct {
 	calculatedExprs map[ast.Expr]bool
 }
 
-func (v *complexityVisitor) incNesting() {
+func (v *cognitiveVisitor) incNesting() {
 	v.nesting++
 }
 
-func (v *complexityVisitor) decNesting() {
+func (v *cognitiveVisitor) decNesting() {
 	v.nesting--
 }
 
-func (v *complexityVisitor) incComplexity() {
+func (v *cognitiveVisitor) incComplexity() {
 	v.complexity++
 }
 
-func (v *complexityVisitor) nestIncComplexity() {
+func (v *cognitiveVisitor) nestIncComplexity() {
 	v.complexity += (v.nesting + 1)
 }
 
-func (v *complexityVisitor) markAsElseNode(n ast.Node) {
+func (v *cognitiveVisitor) markAsElseNode(n ast.Node) {
 	if v.elseNodes == nil {
 		v.elseNodes = make(map[ast.Node]bool)
 	}
@@ -98,7 +46,7 @@ func (v *complexityVisitor) markAsElseNode(n ast.Node) {
 	v.elseNodes[n] = true
 }
 
-func (v *complexityVisitor) markedAsElseNode(n ast.Node) bool {
+func (v *cognitiveVisitor) markedAsElseNode(n ast.Node) bool {
 	if v.elseNodes == nil {
 		return false
 	}
@@ -106,7 +54,7 @@ func (v *complexityVisitor) markedAsElseNode(n ast.Node) bool {
 	return v.elseNodes[n]
 }
 
-func (v *complexityVisitor) markCalculated(e ast.Expr) {
+func (v *cognitiveVisitor) markCalculated(e ast.Expr) {
 	if v.calculatedExprs == nil {
 		v.calculatedExprs = make(map[ast.Expr]bool)
 	}
@@ -114,7 +62,7 @@ func (v *complexityVisitor) markCalculated(e ast.Expr) {
 	v.calculatedExprs[e] = true
 }
 
-func (v *complexityVisitor) isCalculated(e ast.Expr) bool {
+func (v *cognitiveVisitor) isCalculated(e ast.Expr) bool {
 	if v.calculatedExprs == nil {
 		return false
 	}
@@ -123,7 +71,7 @@ func (v *complexityVisitor) isCalculated(e ast.Expr) bool {
 }
 
 // Visit implements the ast.Visitor interface.
-func (v *complexityVisitor) Visit(n ast.Node) ast.Visitor {
+func (v *cognitiveVisitor) Visit(n ast.Node) ast.Visitor {
 	switch n := n.(type) {
 	case *ast.IfStmt:
 		return v.visitIfStmt(n)
@@ -147,7 +95,7 @@ func (v *complexityVisitor) Visit(n ast.Node) ast.Visitor {
 	return v
 }
 
-func (v *complexityVisitor) visitIfStmt(n *ast.IfStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitIfStmt(n *ast.IfStmt) ast.Visitor {
 	v.incIfComplexity(n)
 
 	if n.Init != nil {
@@ -173,7 +121,7 @@ func (v *complexityVisitor) visitIfStmt(n *ast.IfStmt) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitSwitchStmt(n *ast.SwitchStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitSwitchStmt(n *ast.SwitchStmt) ast.Visitor {
 	v.nestIncComplexity()
 
 	if n.Init != nil {
@@ -190,7 +138,7 @@ func (v *complexityVisitor) visitSwitchStmt(n *ast.SwitchStmt) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitSelectStmt(n *ast.SelectStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitSelectStmt(n *ast.SelectStmt) ast.Visitor {
 	v.nestIncComplexity()
 
 	v.incNesting()
@@ -199,7 +147,7 @@ func (v *complexityVisitor) visitSelectStmt(n *ast.SelectStmt) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitForStmt(n *ast.ForStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitForStmt(n *ast.ForStmt) ast.Visitor {
 	v.nestIncComplexity()
 
 	if n.Init != nil {
@@ -220,7 +168,7 @@ func (v *complexityVisitor) visitForStmt(n *ast.ForStmt) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitRangeStmt(n *ast.RangeStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitRangeStmt(n *ast.RangeStmt) ast.Visitor {
 	v.nestIncComplexity()
 
 	if n.Key != nil {
@@ -239,7 +187,7 @@ func (v *complexityVisitor) visitRangeStmt(n *ast.RangeStmt) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitFuncLit(n *ast.FuncLit) ast.Visitor {
+func (v *cognitiveVisitor) visitFuncLit(n *ast.FuncLit) ast.Visitor {
 	ast.Walk(v, n.Type)
 
 	v.incNesting()
@@ -248,14 +196,14 @@ func (v *complexityVisitor) visitFuncLit(n *ast.FuncLit) ast.Visitor {
 	return nil
 }
 
-func (v *complexityVisitor) visitBranchStmt(n *ast.BranchStmt) ast.Visitor {
+func (v *cognitiveVisitor) visitBranchStmt(n *ast.BranchStmt) ast.Visitor {
 	if n.Label != nil {
 		v.incComplexity()
 	}
 	return v
 }
 
-func (v *complexityVisitor) visitBinaryExpr(n *ast.BinaryExpr) ast.Visitor {
+func (v *cognitiveVisitor) visitBinaryExpr(n *ast.BinaryExpr) ast.Visitor {
 	if (n.Op == token.LAND || n.Op == token.LOR) && !v.isCalculated(n) {
 		ops := v.collectBinaryOps(n)
 
@@ -270,7 +218,7 @@ func (v *complexityVisitor) visitBinaryExpr(n *ast.BinaryExpr) ast.Visitor {
 	return v
 }
 
-func (v *complexityVisitor) visitCallExpr(n *ast.CallExpr) ast.Visitor {
+func (v *cognitiveVisitor) visitCallExpr(n *ast.CallExpr) ast.Visitor {
 	if name, ok := n.Fun.(*ast.Ident); ok {
 		if name.Obj == v.name.Obj && name.Name == v.name.Name {
 			v.incComplexity()
@@ -279,7 +227,7 @@ func (v *complexityVisitor) visitCallExpr(n *ast.CallExpr) ast.Visitor {
 	return v
 }
 
-func (v *complexityVisitor) collectBinaryOps(exp ast.Expr) []token.Token {
+func (v *cognitiveVisitor) collectBinaryOps(exp ast.Expr) []token.Token {
 	v.markCalculated(exp)
 	switch exp := exp.(type) {
 	case *ast.BinaryExpr:
@@ -292,7 +240,7 @@ func (v *complexityVisitor) collectBinaryOps(exp ast.Expr) []token.Token {
 	}
 }
 
-func (v *complexityVisitor) incIfComplexity(n *ast.IfStmt) {
+func (v *cognitiveVisitor) incIfComplexity(n *ast.IfStmt) {
 	if v.markedAsElseNode(n) {
 		v.incComplexity()
 	} else {

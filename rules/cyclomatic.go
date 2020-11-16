@@ -1,7 +1,6 @@
-package cyclomatic
+package rules
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -117,31 +116,43 @@ func (a *fileAnalyzer) addStatIfNotIgnored(node ast.Node, funcName string, doc *
 	a.stats = append(a.stats, Stat{
 		PkgName:    a.file.Name.Name,
 		FuncName:   funcName,
-		Complexity: Complexity(node),
+		Complexity: CyclomaticComplexity(node),
 		Pos:        a.fileSet.Position(node.Pos()),
 	})
 }
 
-// funcName returns the name representation of a function or method:
-// "(Type).Name" for methods or simply "Name" for functions.
-func funcName(fn *ast.FuncDecl) string {
-	if fn.Recv != nil {
-		if fn.Recv.NumFields() > 0 {
-			typ := fn.Recv.List[0].Type
-			return fmt.Sprintf("(%s).%s", recvString(typ), fn.Name)
-		}
-	}
-	return fn.Name.Name
+type complexityVisitor struct {
+	// complexity is the cyclomatic complexity
+	complexity int
 }
 
-// recvString returns a string representation of recv of the
-// form "T", "*T", or "BADRECV" (if not a proper receiver type).
-func recvString(recv ast.Expr) string {
-	switch t := recv.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.StarExpr:
-		return "*" + recvString(t.X)
+// Visit implements the ast.Visitor interface.
+func (v *complexityVisitor) Visit(n ast.Node) ast.Visitor {
+	switch n := n.(type) {
+	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt:
+		v.complexity++
+	case *ast.CaseClause:
+		if n.List != nil { // ignore default case
+			v.complexity++
+		}
+	case *ast.CommClause:
+		if n.Comm != nil { // ignore default case
+			v.complexity++
+		}
+	case *ast.BinaryExpr:
+		if n.Op == token.LAND || n.Op == token.LOR {
+			v.complexity++
+		}
 	}
-	return "BADRECV"
+	return v
+}
+
+// CyclomaticComplexity calculates the cyclomatic complexity of a function.
+// The 'fn' node is either a *ast.FuncDecl or a *ast.FuncLit.
+func CyclomaticComplexity(fn ast.Node) int {
+	v := complexityVisitor{
+		complexity: 1,
+	}
+	ast.Walk(&v, fn)
+	return v.complexity
 }

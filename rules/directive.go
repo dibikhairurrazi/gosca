@@ -1,4 +1,4 @@
-package cyclomatic
+package rules
 
 import (
 	"go/ast"
