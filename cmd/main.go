@@ -20,12 +20,21 @@ Flags:
                           the short option prints the value without a label
     -total, -total-short  show the total complexity for all functions;
                           the short option prints the value without a label
-    -ignore REGEX         exclude files matching the given regular expression
+	-ignore REGEX         exclude files matching the given regular expression
+	-max-cyclo N		  show function with cyclomatic complexity of N or higher
+	-max-cogni N 		  show function with cognitive complexity of N or higher
 The output fields for each line are:
 <complexity> <package> <function> <file:line:column>
 `
 
+var (
+	cycloThreshold     *int
+	cognitiveThreshold *int
+)
+
 func main() {
+	cycloThreshold = flag.Int("max-cyclo", 0, "show functions with complexity > N only")
+	cognitiveThreshold = flag.Int("max-cogni", 0, "show functions with complexity > N only")
 	ignore := flag.String("ignore", "", "exclude files matching the given regular expression")
 
 	log.SetFlags(0)
@@ -37,10 +46,26 @@ func main() {
 		usage()
 	}
 	allStats := rules.Analyze(paths, regex(*ignore))
-	printStats(allStats)
+	if *cycloThreshold == 0 && *cognitiveThreshold == 0 {
+		printAll(allStats)
+	} else {
+		printStats(allStats)
+	}
 }
 
 func printStats(s rules.Stats) {
+	for _, stat := range s {
+		if stat.Cyclomatic > *cycloThreshold {
+			fmt.Printf("Function %v() on package %v have cyclomatic complexity of %d (exceeding %d) consider refactoring.\n", stat.FuncName, stat.PkgName, stat.Cyclomatic, *cycloThreshold)
+		}
+
+		if stat.Cognitive > *cognitiveThreshold {
+			fmt.Printf("Function %v() on package %v have cognitive complexity of %d (exceeding %d) consider refactoring.\n", stat.FuncName, stat.PkgName, stat.Cognitive, *cognitiveThreshold)
+		}
+	}
+}
+
+func printAll(s rules.Stats) {
 	for _, stat := range s {
 		fmt.Println(stat)
 	}

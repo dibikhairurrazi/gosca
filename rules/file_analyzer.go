@@ -59,7 +59,7 @@ func (a *fileAnalyzer) addStatIfNotIgnored(node ast.Node, funcName string, doc *
 		PkgName:    a.file.Name.Name,
 		FuncName:   funcName,
 		Cyclomatic: CyclomaticComplexity(node),
-		Cognitive:  CognitiveComplexity(node.(*ast.FuncDecl)),
+		Cognitive:  CognitiveComplexity(node),
 		Pos:        a.fileSet.Position(node.Pos()),
 	})
 }

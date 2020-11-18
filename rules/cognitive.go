@@ -6,12 +6,16 @@ import (
 )
 
 // CognitiveComplexity calculates the cognitive complexity of a function.
-func CognitiveComplexity(fn *ast.FuncDecl) int {
-	v := cognitiveVisitor{
-		name: fn.Name,
+func CognitiveComplexity(fn ast.Node) int {
+	if fn, ok := fn.(*ast.FuncDecl); ok {
+		v := cognitiveVisitor{
+			name: fn.Name,
+		}
+		ast.Walk(&v, fn)
+		return v.complexity
 	}
-	ast.Walk(&v, fn)
-	return v.complexity
+
+	return 0
 }
 
 /* // ComplexityStats builds the complexity statistics.
