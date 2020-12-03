@@ -13,18 +13,11 @@ const usageDoc = `Calculate cyclomatic complexities of Go functions.
 Usage:
     gosca [flags] <Go file or directory> ...
 Flags:
-    -over N               show functions with complexity > N only and
-                          return exit code 1 if the set is non-empty
-    -top N                show the top N most complex functions only
-    -avg, -avg-short      show the average complexity over all functions;
-                          the short option prints the value without a label
-    -total, -total-short  show the total complexity for all functions;
-                          the short option prints the value without a label
 	-ignore REGEX         exclude files matching the given regular expression
 	-max-cyclo N		  show function with cyclomatic complexity of N or higher
 	-max-cogni N 		  show function with cognitive complexity of N or higher
 The output fields for each line are:
-<complexity> <package> <function> <file:line:column>
+Function <function>() on package <package> have cyclomatic complexity of <complexity> (exceeding <N>) consider refactoring.
 `
 
 var (
@@ -51,6 +44,12 @@ func main() {
 	} else {
 		printStats(allStats)
 	}
+
+	// go vet integration
+	/* multichecker.Main(
+		atomic.Analyzer,
+		loopclosure.Analyzer,
+	) */
 }
 
 func printStats(s rules.Stats) {

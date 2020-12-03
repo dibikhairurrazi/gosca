@@ -6,7 +6,6 @@ import (
 )
 
 type complexityVisitor struct {
-	// complexity is the cyclomatic complexity
 	complexity int
 }
 

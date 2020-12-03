@@ -18,21 +18,6 @@ func CognitiveComplexity(fn ast.Node) int {
 	return 0
 }
 
-/* // ComplexityStats builds the complexity statistics.
-func ComplexityStats(f *ast.File, fset *token.FileSet, stats []Stat) []Stat {
-	for _, decl := range f.Decls {
-		if fn, ok := decl.(*ast.FuncDecl); ok {
-			stats = append(stats, Stat{
-				PkgName:    f.Name.Name,
-				FuncName:   funcName(fn),
-				Complexity: CognitiveComplexity(fn),
-				Pos:        fset.Position(fn.Pos()),
-			})
-		}
-	}
-	return stats
-} */
-
 type cognitiveVisitor struct {
 	name            *ast.Ident
 	complexity      int
