@@ -33,18 +33,23 @@ func main() {
 
 	log.SetFlags(0)
 	log.SetPrefix("gosca: ")
+
 	flag.Usage = usage
 	flag.Parse()
+
 	paths := flag.Args()
 	if len(paths) == 0 {
 		usage()
 	}
+
 	allStats := rules.Analyze(paths, regex(*ignore))
 	if *cycloThreshold == 0 && *cognitiveThreshold == 0 {
 		printAll(allStats)
 	} else {
 		printStats(allStats)
 	}
+
+	os.Exit(0)
 
 	// go vet integration
 	/* multichecker.Main(
@@ -83,6 +88,6 @@ func regex(expr string) *regexp.Regexp {
 }
 
 func usage() {
-	_, _ = fmt.Fprintf(os.Stderr, usageDoc)
+	fmt.Fprintf(os.Stderr, usageDoc)
 	os.Exit(2)
 }
