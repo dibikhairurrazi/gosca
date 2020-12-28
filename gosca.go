@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go-sca/rules"
 	"log"
 	"os"
 	"regexp"
+
+	"github.com/dibikhairurrazi/gosca/rules"
 )
 
 const usageDoc = `Calculate cyclomatic complexities of Go functions.
