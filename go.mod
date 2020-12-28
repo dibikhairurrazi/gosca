@@ -1,4 +1,4 @@
-module go-sca
+module github.com/dibikhairurrazi/gosca
 
 go 1.13
 
